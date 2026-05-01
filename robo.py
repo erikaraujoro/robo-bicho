@@ -19,17 +19,31 @@ SITES = {
 
 # ================= GOOGLE =================
 def conectar():
+    import os
+    import json
+
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
 
-    creds = Credentials.from_service_account_file(
-        "credenciais.json",
-        scopes=scopes
-    )
+    # 🔹 Se estiver rodando local (com arquivo)
+    if os.path.exists("credenciais.json"):
+        creds = Credentials.from_service_account_file(
+            "credenciais.json",
+            scopes=scopes
+        )
+    else:
+        # 🔹 Se estiver rodando no GitHub (via Secret)
+        creds_dict = json.loads(os.environ["GOOGLE_CREDENTIALS"])
+
+        creds = Credentials.from_service_account_info(
+            creds_dict,
+            scopes=scopes
+        )
 
     client = gspread.authorize(creds)
+
     return client.open_by_key(SPREADSHEET_ID).worksheet(ABA)
 
 # ================= PEGAR DATA =================
