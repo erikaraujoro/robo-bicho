@@ -55,32 +55,41 @@ def pegar_data(html):
 
 # ================= EXTRAIR DADOS =================
 def extrair(url):
-    headers = {"User-Agent": "Mozilla/5.0"}
-    html = requests.get(url, headers=headers, timeout=30).text
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                      "(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Referer": "https://bichocerto.com/resultados/"
+    }
+
+    resp = requests.get(url, headers=headers, timeout=30)
+    html = resp.text
+
+    print("Status:", resp.status_code, "| URL:", url)
+    print("Tamanho HTML:", len(html))
 
     data = pegar_data(html)
 
-    match_horas = re.search(r'var horasExtracoes = (\[.*?\]);', html, re.DOTALL)
-    match_dados = re.search(r'var dados = (\[.*?\]);', html, re.DOTALL)
+    match_horas = re.search(r'var\s+horasExtracoes\s*=\s*(\[.*?\]);', html, re.DOTALL)
+    match_dados = re.search(r'var\s+dados\s*=\s*(\[.*?\]);', html, re.DOTALL)
 
     if not match_dados:
         print("Não encontrou dados no site:", url)
+        print("Inicio HTML:", html[:500])
         return []
 
     dados = json.loads(match_dados.group(1))
 
     if match_horas:
-        horas = json.loads(match_horas.group(1))
+        horas_raw = json.loads(match_horas.group(1))
         horas = []
-        for h in json.loads(match_horas.group(1)):
-            h = str(h)
-
+        for h in horas_raw:
+            h = str(h).strip()
             if ":" in h:
                 h = h.split(":")[0]
-            elif "h" in h:
-                h = h.replace("h", "")
-
-            horas.append(h.strip().zfill(2))
+            h = h.replace("h", "").strip().zfill(2)
+            horas.append(h)
     else:
         horas = []
 
